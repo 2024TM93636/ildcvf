@@ -1,0 +1,70 @@
+# ==========================
+# Environment / Secrets
+# ==========================
+.env
+../../.env.example
+!../../.env.example
+
+# ==========================
+# Java / Maven
+# ==========================
+**/target/
+*.class
+*.jar
+*.war
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# ==========================
+# Node / React
+# ==========================
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Local frontend environment
+dashboard/.env
+dashboard/.env.local
+dashboard/.env.*.local
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+
+# ==========================
+# OS
+# ==========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# Experiment temporary data
+# ==========================
+experiments/**/tmp/
+experiments/**/output/
+
+# ==========================
+# Generated test artifacts
+# ==========================
+generated/
+
+# ==========================
+# Local certificates
+# ==========================
+*.pem
+*.key
+*.pfx
+*.cer

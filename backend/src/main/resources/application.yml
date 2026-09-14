@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: ildcvf-backend
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+ildcvf:
+  environment: ${ILDCVF_ENVIRONMENT:development}

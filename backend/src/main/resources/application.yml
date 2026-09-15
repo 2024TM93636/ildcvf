@@ -12,4 +12,29 @@ management:
         include: health,info
 
 ildcvf:
+
   environment: ${ILDCVF_ENVIRONMENT:development}
+
+  targets:
+    resident:
+      service-id: resident-api
+      base-url: ${RESIDENT_API_BASE_URL:http://localhost:8090}
+
+  traffic:
+    max-capture-bytes: ${TRAFFIC_MAX_CAPTURE_BYTES:65536}
+
+    request-header-allowlist:
+      - Accept
+      - Content-Type
+      - User-Agent
+      - X-Correlation-ID
+      - If-Match
+      - If-None-Match
+
+    response-header-allowlist:
+      - Content-Type
+      - Location
+      - ETag
+      - Cache-Control
+      - Allow
+      - X-Correlation-ID

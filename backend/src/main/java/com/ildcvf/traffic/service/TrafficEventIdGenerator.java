@@ -1,19 +1,26 @@
 package com.ildcvf.traffic.service;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
-public class TrafficEventIdGenerator {
+@ConditionalOnProperty(
+        name = "ildcvf.traffic.repository",
+        havingValue = "memory"
+)
+public class TrafficEventIdGenerator
+        implements TrafficEventIdentityGenerator {
 
     private final AtomicLong sequence =
             new AtomicLong(0);
 
-    public EventIdentity next() {
+    @Override
+    public TrafficEventIdentity next() {
         long value = sequence.incrementAndGet();
 
-        return new EventIdentity(
+        return new TrafficEventIdentity(
                 value,
                 "traffic-%08d".formatted(value)
         );
@@ -21,11 +28,5 @@ public class TrafficEventIdGenerator {
 
     public void reset() {
         sequence.set(0);
-    }
-
-    public record EventIdentity(
-            long sequence,
-            String eventId
-    ) {
     }
 }

@@ -35,33 +35,33 @@ public class TrafficProxyService {
     private final ResidentForwardingClient forwardingClient;
     private final ResidentTargetProperties targetProperties;
     private final TrafficEventRepository repository;
-    private final TrafficEventIdGenerator idGenerator;
     private final PayloadCaptureService payloadCaptureService;
     private final HeaderPolicy headerPolicy;
+    private final TrafficEventIdentityGenerator identityGenerator;
 
     public TrafficProxyService(
             ResidentForwardingClient forwardingClient,
             ResidentTargetProperties targetProperties,
             TrafficEventRepository repository,
-            TrafficEventIdGenerator idGenerator,
             PayloadCaptureService payloadCaptureService,
-            HeaderPolicy headerPolicy
+            HeaderPolicy headerPolicy,
+            TrafficEventIdentityGenerator identityGenerator
     ) {
         this.forwardingClient = forwardingClient;
         this.targetProperties = targetProperties;
         this.repository = repository;
-        this.idGenerator = idGenerator;
         this.payloadCaptureService =
                 payloadCaptureService;
         this.headerPolicy = headerPolicy;
+        this.identityGenerator = identityGenerator;
     }
 
     public ForwardedResponse proxy(
             HttpServletRequest request,
             byte[] requestBody
     ) {
-        TrafficEventIdGenerator.EventIdentity identity =
-                idGenerator.next();
+        TrafficEventIdentity identity =
+                identityGenerator.next();
 
         Instant timestamp = Instant.now();
 
@@ -179,7 +179,22 @@ public class TrafficProxyService {
                 durationMs
         );
 
-        repository.save(event);
+        try {
+            repository.save(event);
+        } catch (RuntimeException exception) {
+            log.error(
+                    "TrafficEvent persistence failed; returning upstream response unchanged. "
+                            + "eventId={} sequence={} method={} path={} upstreamStatus={} "
+                            + "exceptionType={} message={}",
+                    identity.eventId(),
+                    identity.sequence(),
+                    method,
+                    targetPath,
+                    upstreamResponse.status().value(),
+                    exception.getClass().getSimpleName(),
+                    exception.getMessage()
+            );
+        }
 
         log.info(
                 "Proxied {} {} to {} -> {} eventId={} durationMs={}",

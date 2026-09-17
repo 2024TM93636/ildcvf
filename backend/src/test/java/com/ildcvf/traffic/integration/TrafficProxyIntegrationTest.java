@@ -79,6 +79,11 @@ class TrafficProxyIntegrationTest {
                 "ildcvf.traffic.max-capture-bytes",
                 () -> 65536
         );
+
+        registry.add(
+                "ildcvf.traffic.repository",
+                () -> "memory"
+        );
     }
 
     @LocalServerPort

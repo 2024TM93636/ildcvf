@@ -2,8 +2,8 @@
 # Environment / Secrets
 # ==========================
 .env
-../../.env.example
-!../../.env.example
+.env.*
+!.env.example
 
 # ==========================
 # Java / Maven

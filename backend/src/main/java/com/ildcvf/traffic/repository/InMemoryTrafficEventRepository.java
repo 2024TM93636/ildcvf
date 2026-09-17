@@ -2,6 +2,7 @@ package com.ildcvf.traffic.repository;
 
 import com.ildcvf.traffic.domain.TrafficEvent;
 import org.springframework.stereotype.Repository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Repository
+@ConditionalOnProperty(
+        name = "ildcvf.traffic.repository",
+        havingValue = "memory"
+)
 public class InMemoryTrafficEventRepository
         implements TrafficEventRepository {
 

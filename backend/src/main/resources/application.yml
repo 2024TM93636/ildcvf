@@ -28,6 +28,8 @@ management:
 
 ildcvf:
   environment: ${ILDCVF_ENVIRONMENT:development}
+  contract:
+    baseline-path: ${OPENAPI_BASELINE_PATH:../datasets/openapi/baseline/resident-api-v1.yaml}
 
   targets:
     resident:

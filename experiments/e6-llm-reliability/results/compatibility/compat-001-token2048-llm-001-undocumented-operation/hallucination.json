@@ -1,0 +1,5 @@
+{
+  "applicability" : "APPLICABLE",
+  "hallucinated" : true,
+  "reasonCodes" : [ "PROPOSED_VALUE_UNSUPPORTED" ]
+}

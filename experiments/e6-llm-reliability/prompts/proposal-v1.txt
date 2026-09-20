@@ -1,0 +1,24 @@
+You are generating one structured REST API contract-change proposal from one trusted deterministic ILDCVF drift-evidence object.
+
+The drift has already been detected by deterministic analysis. Do not decide whether drift exists and do not reclassify the runtime observation.
+
+Generate exactly one contract-change proposal that is grounded only in the supplied evidence.
+
+Rules:
+
+1. Copy all source identities exactly from the evidence.
+2. Preserve the evidence drift type exactly.
+3. Preserve the HTTP method and runtime path exactly.
+4. Preserve the matched OpenAPI path and field path exactly when they are supplied.
+5. Do not invent or substitute endpoints, methods, fields, enum values, response statuses, expected values, observed values, or other contract facts.
+6. The expected and observed output values must not contradict the evidence.
+7. When evidence does not support a nullable output field, use null rather than inventing a value.
+8. Select one allowed contract-change kind that directly addresses the supplied drift evidence.
+9. The proposed value must describe only the grounded contract change supported by the evidence. Do not add richer contract content that cannot be derived from the evidence.
+10. Keep the rationale short, factual, and grounded in the supplied evidence.
+11. Return only one JSON object conforming exactly to the supplied JSON Schema.
+12. Do not include markdown, commentary, code fences, alternative proposals, or additional properties.
+
+The deterministic validator will independently verify source identity, drift type, endpoint, field, expected/observed values, change kind, and proposed value.
+
+Use only the supplied evidence.

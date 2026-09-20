@@ -1,0 +1,19 @@
+{
+  "applicability" : "APPLICABLE",
+  "status" : "SUCCESS",
+  "proposal" : {
+    "proposalId" : "evaluation-004:UNDOCUMENTED_OPERATION:1",
+    "sourceTrafficEventId" : "evaluation-004",
+    "sourceFindingId" : "evaluation-004:UNDOCUMENTED_OPERATION:1",
+    "driftType" : "UNDOCUMENTED_OPERATION",
+    "changeKind" : "ADD_OPERATION",
+    "method" : "PATCH",
+    "runtimePath" : "/api/residents",
+    "matchedOpenApiPath" : null,
+    "targetFieldPath" : null,
+    "expected" : "documented OpenAPI operation",
+    "observed" : "PATCH /api/residents",
+    "proposedValue" : null,
+    "rationale" : "Runtime operation PATCH /api/residents is not documented in the OpenAPI baseline, indicating an undocumented operation drift."
+  }
+}

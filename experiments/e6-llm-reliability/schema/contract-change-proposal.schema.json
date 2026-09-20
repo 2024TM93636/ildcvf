@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ILDCVF E6 Contract Change Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "proposalId": {
+      "type": "string"
+    },
+    "sourceTrafficEventId": {
+      "type": "string"
+    },
+    "sourceFindingId": {
+      "type": "string"
+    },
+    "driftType": {
+      "type": "string",
+      "enum": [
+        "UNDOCUMENTED_OPERATION",
+        "UNEXPECTED_REQUEST_FIELD",
+        "MISSING_REQUIRED_REQUEST_FIELD",
+        "REQUEST_TYPE_MISMATCH",
+        "REQUEST_ENUM_MISMATCH",
+        "UNDOCUMENTED_RESPONSE_STATUS",
+        "UNEXPECTED_RESPONSE_FIELD",
+        "MISSING_REQUIRED_RESPONSE_FIELD",
+        "RESPONSE_TYPE_MISMATCH",
+        "RESPONSE_ENUM_MISMATCH"
+      ]
+    },
+    "changeKind": {
+      "type": "string",
+      "enum": [
+        "ADD_OPERATION",
+        "ADD_REQUEST_FIELD",
+        "RELAX_REQUEST_REQUIRED_FIELD",
+        "CHANGE_REQUEST_FIELD_TYPE",
+        "ADD_REQUEST_ENUM_VALUE",
+        "ADD_RESPONSE_STATUS",
+        "ADD_RESPONSE_FIELD",
+        "RELAX_RESPONSE_REQUIRED_FIELD",
+        "CHANGE_RESPONSE_FIELD_TYPE",
+        "ADD_RESPONSE_ENUM_VALUE"
+      ]
+    },
+    "method": {
+      "type": "string"
+    },
+    "runtimePath": {
+      "type": "string"
+    },
+    "matchedOpenApiPath": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "targetFieldPath": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expected": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observed": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "proposedValue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposalId",
+    "sourceTrafficEventId",
+    "sourceFindingId",
+    "driftType",
+    "changeKind",
+    "method",
+    "runtimePath",
+    "matchedOpenApiPath",
+    "targetFieldPath",
+    "expected",
+    "observed",
+    "proposedValue",
+    "rationale"
+  ]
+}

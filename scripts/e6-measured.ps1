@@ -687,11 +687,9 @@ switch ($PSCmdlet.ParameterSetName) {
     }
 
     "Execute" {
-        /*
-         * Execution is deliberately isolated in its own
-         * parameter set. Merely running the script cannot
-         * fall through into this branch.
-         */
+        # Execution is deliberately isolated in its own
+        # parameter set. Merely running the script cannot
+        # fall through into this branch.
 
         Invoke-PreflightChecks `
             -Id $AttemptId `

@@ -14,4 +14,6 @@ public interface TrafficEventRepository {
     Optional<TrafficEvent> findById(String eventId);
 
     void clear();
+
+    List<TrafficEvent> findRecent(int limit);
 }

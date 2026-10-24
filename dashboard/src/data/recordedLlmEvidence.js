@@ -1,0 +1,45 @@
+export const recordedLlmEvidence = [
+    {
+        attemptId: 'llm-001-undocumented-operation-r3',
+        scenarioId: 'llm-001-undocumented-operation',
+        provider: 'groq',
+        model: 'openai/gpt-oss-20b',
+        providerCallStatus: 'SUCCESS',
+        proposalParseStatus: 'SUCCESS',
+        changeKind: 'ADD_OPERATION',
+        method: 'PATCH',
+        runtimePath: '/api/residents',
+        proposedValue: null,
+        validatorAccepted: false,
+        hallucinationApplicability: 'APPLICABLE',
+        hallucinationReasonCodes: ['PROPOSED_VALUE_UNSUPPORTED'],
+        sourceFile:
+            'llm-001-undocumented-operation-r3/result.json',
+        sha256:
+            '050252CAD0F9E837B5AB711CAC64B3F2BD34DDA77F7CEEC755E4EB52D08CFE6B',
+        validatorCodes: ['PROPOSED_VALUE_NOT_GROUNDED'],
+        groundTruthExactMatch: false,
+        hallucinated: true,
+    },
+    {
+        attemptId: 'llm-001-undocumented-operation-r1',
+        scenarioId: 'llm-001-undocumented-operation',
+        provider: 'groq',
+        model: 'openai/gpt-oss-20b',
+        providerCallStatus: 'TRANSPORT_FAILURE',
+        providerDiagnostic: 'Provider transport failed.',
+        proposalParseStatus: null,
+        changeKind: null,
+        method: null,
+        runtimePath: null,
+        proposedValue: null,
+        validatorAccepted: null,
+        hallucinationApplicability: 'NOT_APPLICABLE',
+        hallucinationReasonCodes: [],
+        sourceFile:
+            'llm-001-undocumented-operation-r1/result.json',
+        sha256:
+            '3C98886B76031189BBDE7D1BA7329AD100F0C5DB1D118CCDE342239E62950263',
+        validatorCodes: [],
+    },
+]

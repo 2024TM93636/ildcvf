@@ -13,7 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/residents")
@@ -25,16 +27,14 @@ public class ResidentController {
 
     public ResidentController(
             ResidentService residentService,
-            ResidentMapper residentMapper
-    ) {
+            ResidentMapper residentMapper) {
         this.residentService = residentService;
         this.residentMapper = residentMapper;
     }
 
     @PostMapping
     public ResponseEntity<ResidentResponse> createResident(
-            @Valid @RequestBody CreateResidentRequest request
-    ) {
+            @Valid @RequestBody CreateResidentRequest request) {
         Resident resident = residentMapper.toDomain(request);
         Resident createdResident = residentService.create(resident);
 
@@ -56,19 +56,29 @@ public class ResidentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResidentResponse> getResident(
-            @PathVariable @Positive(message = "Resident id must be greater than zero") Long id
-    ) {
+    public ResponseEntity<Map<String, Object>> getResident(
+            @PathVariable @Positive(message = "Resident id must be greater than zero") Long id) {
         Resident resident = residentService.getById(id);
+        ResidentResponse response = residentMapper.toResponse(resident);
 
-        return ResponseEntity.ok(residentMapper.toResponse(resident));
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("id", String.valueOf(response.id()));
+        body.put("firstName", response.firstName());
+        body.put("lastName", response.lastName());
+        body.put("email", response.email());
+        body.put("dateOfBirth", response.dateOfBirth());
+        body.put("phoneNumber", response.phoneNumber());
+        body.put("status", response.status());
+        body.put("roomNumber", response.roomNumber());
+
+        return ResponseEntity.ok(body);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ResidentResponse> updateResident(
             @PathVariable @Positive(message = "Resident id must be greater than zero") Long id,
-            @Valid @RequestBody UpdateResidentRequest request
-    ) {
+            @Valid @RequestBody UpdateResidentRequest request) {
         Resident resident = residentMapper.toDomain(request);
         Resident updatedResident = residentService.update(id, resident);
 
@@ -77,8 +87,7 @@ public class ResidentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteResident(
-            @PathVariable @Positive(message = "Resident id must be greater than zero") Long id
-    ) {
+            @PathVariable @Positive(message = "Resident id must be greater than zero") Long id) {
         residentService.delete(id);
 
         return ResponseEntity.noContent().build();

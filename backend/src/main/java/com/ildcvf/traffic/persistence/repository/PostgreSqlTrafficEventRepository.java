@@ -5,6 +5,7 @@ import com.ildcvf.traffic.persistence.mapper.TrafficEventMapper;
 import com.ildcvf.traffic.repository.TrafficEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,5 +59,20 @@ public class PostgreSqlTrafficEventRepository
     @Override
     public void clear() {
         jpaRepository.deleteAllInBatch();
+    }
+
+    @Override
+    public List<TrafficEvent> findRecent(int limit) {
+        if (limit < 1 || limit > 20) {
+            throw new IllegalArgumentException(
+                    "limit must be between 1 and 20"
+            );
+        }
+
+        return jpaRepository
+                .findByOrderBySequenceDesc(PageRequest.of(0, limit))
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

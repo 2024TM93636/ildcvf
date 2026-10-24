@@ -37,4 +37,30 @@ public class TrafficDebugController {
                                 .build()
                 );
     }
+
+    @GetMapping("/recent")
+    public List<TrafficSummary> getRecent() {
+        return repository.findRecent(20)
+                .stream()
+                .map(event -> new TrafficSummary(
+                        event.eventId(),
+                        event.sequence(),
+                        event.timestamp(),
+                        event.method(),
+                        event.requestPath(),
+                        event.responseStatus(),
+                        event.upstreamReached()
+                ))
+                .toList();
+    }
+
+    public record TrafficSummary(
+            String eventId,
+            long sequence,
+            java.time.Instant timestamp,
+            String method,
+            String requestPath,
+            int responseStatus,
+            boolean upstreamReached
+    ) {}
 }

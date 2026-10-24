@@ -40,6 +40,26 @@ public class InMemoryTrafficEventRepository
     }
 
     @Override
+    public List<TrafficEvent> findRecent(int limit) {
+        if (limit < 1 || limit > 20) {
+            throw new IllegalArgumentException(
+                    "limit must be between 1 and 20"
+            );
+        }
+
+        return events.values()
+                .stream()
+                .sorted(
+                        Comparator.comparingLong(
+                                        TrafficEvent::sequence
+                                ).reversed()
+                                .thenComparing(TrafficEvent::eventId)
+                )
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
     public Optional<TrafficEvent> findById(
             String eventId
     ) {

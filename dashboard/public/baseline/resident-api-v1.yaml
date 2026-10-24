@@ -1,0 +1,419 @@
+openapi: 3.1.0
+
+info:
+  title: Resident Management API
+  version: 1.0.0
+  description: >
+    Baseline Resident Management API used by the ILDCVF dissertation
+    experiments. This specification represents the authoritative v1
+    contract against which controlled API drift will later be introduced.
+
+servers:
+  - url: http://localhost:8090
+    description: Local development server
+
+tags:
+  - name: Residents
+    description: Resident management operations
+
+paths:
+
+  /api/residents:
+
+    post:
+      tags:
+        - Residents
+      operationId: createResident
+      summary: Create a resident
+      description: Creates a new resident and assigns a generated numeric identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResidentRequest'
+      responses:
+
+        '201':
+          description: Resident created successfully
+          headers:
+            Location:
+              description: Relative URI of the created resident
+              schema:
+                type: string
+              example: /api/residents/1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidentResponse'
+
+        '400':
+          description: Request validation failed or request body was malformed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    get:
+      tags:
+        - Residents
+      operationId: getAllResidents
+      summary: Get all residents
+      description: >
+        Returns all residents ordered by ascending resident identifier.
+      responses:
+
+        '200':
+          description: Residents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResidentResponse'
+
+  /api/residents/{id}:
+
+    parameters:
+      - $ref: '#/components/parameters/ResidentId'
+
+    get:
+      tags:
+        - Residents
+      operationId: getResident
+      summary: Get a resident by ID
+      responses:
+
+        '200':
+          description: Resident retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidentResponse'
+
+        '400':
+          description: Resident identifier is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+        '404':
+          description: Resident was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    put:
+      tags:
+        - Residents
+      operationId: updateResident
+      summary: Replace an existing resident
+      description: >
+        Performs a full replacement of the mutable resident fields.
+        Required fields must be provided. Optional fields that are omitted
+        are stored as null.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateResidentRequest'
+      responses:
+
+        '200':
+          description: Resident updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidentResponse'
+
+        '400':
+          description: >
+            Resident identifier is invalid, request validation failed,
+            or the request body was malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+        '404':
+          description: Resident was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    delete:
+      tags:
+        - Residents
+      operationId: deleteResident
+      summary: Delete a resident
+      responses:
+
+        '204':
+          description: Resident deleted successfully
+
+        '400':
+          description: Resident identifier is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+        '404':
+          description: Resident was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+components:
+
+  parameters:
+
+    ResidentId:
+      name: id
+      in: path
+      required: true
+      description: Numeric identifier of the resident
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 1
+
+  schemas:
+
+    ResidentStatus:
+      type: string
+      description: Current status of the resident
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - DISCHARGED
+
+    CreateResidentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - email
+        - dateOfBirth
+        - status
+      properties:
+
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: Resident's first name
+          example: Asha
+
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: Resident's last name
+          example: Nair
+
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Resident's email address
+          example: asha.nair@example.com
+
+        dateOfBirth:
+          type: string
+          format: date
+          description: >
+            Resident's date of birth. The implementation requires this
+            value to represent a date in the past.
+          example: '1994-05-20'
+
+        phoneNumber:
+          type:
+            - string
+            - 'null'
+          pattern: '^\+?[1-9][0-9]{7,14}$'
+          description: >
+            Optional phone number containing 8 to 15 digits and optionally
+            beginning with a plus sign.
+          example: '+919876543210'
+
+        status:
+          $ref: '#/components/schemas/ResidentStatus'
+
+        roomNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 20
+          description: Optional resident room identifier
+          example: A-101
+
+    UpdateResidentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - email
+        - dateOfBirth
+        - status
+      properties:
+
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: Resident's first name
+          example: Asha
+
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: Resident's last name
+          example: Nair
+
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Resident's email address
+          example: asha.updated@example.com
+
+        dateOfBirth:
+          type: string
+          format: date
+          description: >
+            Resident's date of birth. The implementation requires this
+            value to represent a date in the past.
+          example: '1994-05-20'
+
+        phoneNumber:
+          type:
+            - string
+            - 'null'
+          pattern: '^\+?[1-9][0-9]{7,14}$'
+          description: Optional resident phone number
+          example: '+919876543211'
+
+        status:
+          $ref: '#/components/schemas/ResidentStatus'
+
+        roomNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 20
+          description: Optional resident room identifier
+          example: B-202
+
+    ResidentResponse:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - dateOfBirth
+        - phoneNumber
+        - status
+        - roomNumber
+      properties:
+
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          readOnly: true
+          example: 1
+
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: Asha
+
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: Nair
+
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: asha.nair@example.com
+
+        dateOfBirth:
+          type: string
+          format: date
+          example: '1994-05-20'
+
+        phoneNumber:
+          type:
+            - string
+            - 'null'
+          pattern: '^\+?[1-9][0-9]{7,14}$'
+          example: '+919876543210'
+
+        status:
+          $ref: '#/components/schemas/ResidentStatus'
+
+        roomNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 20
+          example: A-101
+
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - code
+        - message
+        - path
+        - fieldErrors
+      properties:
+
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-09-14T12:30:00Z'
+
+        status:
+          type: integer
+          example: 400
+
+        error:
+          type: string
+          example: Bad Request
+
+        code:
+          type: string
+          example: VALIDATION_FAILED
+
+        message:
+          type: string
+          example: Request validation failed
+
+        path:
+          type: string
+          example: /api/residents
+
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            email: Email must be valid

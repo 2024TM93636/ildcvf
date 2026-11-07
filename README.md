@@ -1,310 +1,196 @@
-
 # ILDCVF
 
-ILDCVF is an M.Tech dissertation prototype for continuous verification of REST API contracts against observed runtime behaviour.
+**Intelligent Living Documentation and Contract Validation Framework for Large-Scale REST APIs Using LLM-Augmented Traffic Analysis**
 
-The framework captures API request/response evidence, compares it deterministically with a frozen OpenAPI contract, identifies contract drift, and provides a controlled foundation for LLM-assisted contract-change proposals and later regression-test generation.
+ILDCVF is an M.Tech Software Engineering dissertation research prototype that compares observed REST API behavior with a documented OpenAPI baseline and supports an evidence-grounded, human-governed workflow for candidate contract updates.
 
-The project follows a Design Science Research approach and is evaluated using controlled, reproducible REST API evolution scenarios.
+The system is **not** an automatic contract publisher or a production-scale API monitoring platform. Its primary contribution is the integration of runtime evidence, deterministic drift detection, structured LLM suggestions, independent proposal validation, human review, and traceable candidate contract versioning.
 
-## Architecture
+## Project status
 
-The current implementation follows this flow:
+**Final dissertation preparation: completed (November 2026).** The final report and 14-slide viva presentation were accepted for project-tracking closure, subject to formal university submission and acceptance. Research limitations described below remain applicable.
+
+## System workflow
 
 ```text
 API Client
     |
     v
-Traffic Interceptor
+Monitoring Gateway -------> Resident Management REST API
     |
     v
-Target REST API
+Captured Request/Response Evidence
     |
     v
-Runtime Evidence Capture
+PostgreSQL Traffic Events
     |
     v
-PostgreSQL Runtime Knowledge Repository
+OpenAPI Operation Matching + Deterministic Drift Detection
     |
     v
-Deterministic Contract Drift Detection
+Structured Drift Finding
     |
     v
-Grounded Evidence Construction
+Bounded Evidence + Groq LLM Proposal
     |
     v
-LLM-Assisted Contract Proposal
+Independent Deterministic Proposal Validation
+    |
+    +---- Invalid/unsupported ----> Rejected Proposal
     |
     v
-Deterministic Proposal Validation
+Human Review (Approve / Reject)
+    |
+    +---- Rejected ---------------> Recorded Rejection
     |
     v
-Human Review / Later Application Workflow
-````
-
-The current implementation is intentionally modular rather than decomposed into multiple independent microservices.
-
-Major components developed so far include:
-
-* Traffic Interceptor Middleware
-* PostgreSQL runtime evidence repository
-* deterministic Contract Drift Detection Engine
-* controlled deterministic evaluation harness
-* interceptor/persistence performance evaluation harness
-* bounded LLM evidence construction
-* deterministic LLM proposal validation
-* isolated real-LLM reliability experiment infrastructure
-* measured-campaign safety and reporting tooling
-
-## Completed Implementation Milestones
-
-### Foundation and Target API
-
-The repository contains the project foundation, a controlled Resident Management REST API, and a frozen OpenAPI baseline used for contract-drift experiments.
-
-### Runtime Traffic Capture
-
-The interceptor captures structured request and response evidence while preserving the upstream API response. Sensitive headers are excluded and request/response body truncation is supported.
-
-### Durable Runtime Evidence
-
-Captured traffic events are persisted in PostgreSQL using Flyway-managed schema evolution and deterministic event identities.
-
-### Deterministic Contract Drift Detection
-
-The drift engine compares runtime evidence with the frozen OpenAPI contract and detects controlled deviations including:
-
-* undocumented operations
-* unexpected request fields
-* missing required request fields
-* request type mismatches
-* request enum mismatches
-* undocumented response statuses
-* unexpected response fields where the schema is closed
-* missing required response fields
-* response type mismatches
-* response enum mismatches
-
-Drift detection remains deterministic so that experimental results are reproducible and measurable independently of LLM behaviour.
-
-## Controlled Deterministic Evaluation
-
-The frozen Resident API evaluation dataset contains 18 controlled scenarios:
-
-| Measure             | Result |
-| ------------------- | -----: |
-| Total scenarios     |     18 |
-| EVALUATED           |     13 |
-| PARTIALLY_EVALUATED |      4 |
-| NOT_EVALUATED       |      1 |
-| True positives      |     10 |
-| False positives     |      0 |
-| False negatives     |      0 |
-| Precision           |    1.0 |
-| Recall              |    1.0 |
-| F1                  |    1.0 |
-
-These values apply only to the controlled evaluated dataset. They must not be interpreted as evidence of general drift-detection accuracy across arbitrary REST APIs.
-
-The partially evaluated and non-evaluated cases deliberately cover conditions such as truncated payloads, malformed JSON, and failure to reach the upstream service.
-
-## Performance Evaluation
-
-Performance evaluation measures the runtime cost of the interceptor and evidence-persistence path.
-
-The completed campaign compared direct Resident API traffic with traffic routed through ILDCVF.
-
-Observed mean latency in the controlled environment was approximately:
-
-| Workload         |   Direct |    ILDCVF | Mean overhead |
-| ---------------- | -------: | --------: | ------------: |
-| Steady, 5 VUs    | 0.786 ms | 22.427 ms |    +21.641 ms |
-| Moderate, 10 VUs | 1.633 ms | 34.750 ms |    +33.117 ms |
-
-These measurements characterize the interceptor/runtime-evidence persistence path in the controlled test environment. They do **not** measure LLM inference latency and should not be generalized to production deployments without further evaluation.
-
-## LLM Reliability Architecture
-
-LLM functionality is deliberately separated from deterministic drift detection.
-
-The reliability boundary is:
-
-```text
-Deterministic drift detection
-        |
-        v
-Bounded grounded evidence
-        |
-        v
-LLM-assisted structured proposal
-        |
-        v
-Deterministic validation
-        |
-        v
-Human review
+Approved, Validated Proposal
+    |
+    v
+Candidate OpenAPI Generation + Validation + SHA-256
+    |
+    v
+Immutable Candidate Contract Version (not automatic publication)
 ```
 
-Runtime traffic is not supplied directly to the LLM provider. A bounded `GroundedEvidencePackage` is constructed from an already detected drift finding and the relevant contract context.
+The LLM **does not perform drift detection** and cannot independently approve or publish a contract change. A detected mismatch may indicate either an implementation defect or outdated documentation; human review is therefore required.
 
-The LLM proposes a structured contract change. The proposal then passes through deterministic validation before it can be considered for human review or any later application workflow.
+## Technology stack
 
-This design treats LLM output as untrusted generated data rather than authoritative contract state.
+| Area | Technology |
+| --- | --- |
+| Backend | Java 21, Spring Boot 4.1.1, Maven |
+| Persistence | PostgreSQL 17, Flyway |
+| Contract specification and parsing | OpenAPI 3.1, Swagger Parser 2.1.48 |
+| LLM integration | Groq API, `openai/gpt-oss-20b` |
+| Frontend | React 19, Material UI, Vite |
+| Reference application | Resident Management REST API |
+| Containerization | Docker for the **Resident API database** |
 
-## Frozen Real-LLM Reliability Protocol
+The implementation is modular; it should not be described as a deployed distributed microservices platform. Docker usage does not imply that all services were containerized.
 
-The E6 reliability experiment defines:
+## Implemented capabilities
 
-* 10 controlled positive drift scenarios
-* 4 repetitions per scenario
-* 40 scheduled measured attempts
-* no automatic retries
+### Runtime evidence capture
 
-The frozen measured configuration is:
+A monitoring gateway forwards selected HTTP requests to the reference Resident API and records request/response evidence. Traffic events have a durable sequence, unique event identifier, timestamps, HTTP metadata, available body content, body-size information, and truncation indicators. PostgreSQL stores structured header/query metadata in JSONB fields. Evidence persistence is synchronous in the evaluated gateway path.
 
-| Parameter             | Value                |
-| --------------------- | -------------------- |
-| Provider              | Groq                 |
-| Model                 | `openai/gpt-oss-20b` |
-| Temperature           | `0`                  |
-| topP                  | `1`                  |
-| Seed                  | `20260919`           |
-| Max completion tokens | `2048`               |
-| Retry count           | `0`                  |
+### Deterministic OpenAPI drift analysis
 
-The experiment uses a frozen prompt, JSON schema, ground truth, scenario schedule, and protocol manifest.
+The analyzer matches HTTP methods and concrete paths to OpenAPI operations (for example, `GET /api/residents/2` to `GET /api/residents/{id}`) and checks supported request/response contract rules. The controlled evaluation covered categories including undocumented operations, field presence, required fields, types, enum values, and response statuses. Detection is rule-based rather than LLM-based.
 
-## Compatibility Observation
+A demonstrated finding identified a response `id` documented as an integer but observed as a string: `RESPONSE_TYPE_MISMATCH`, severity `BREAKING`.
 
-Before the measured campaign, a controlled compatibility run using the 2048-token configuration reached the provider successfully with HTTP 200 and produced structured output.
+### LLM-assisted structured proposals
 
-The proposal was parseable, but deterministic validation rejected it because its `proposedValue` was not supported by the grounded evidence.
+Groq receives a bounded evidence package derived from an already identified drift finding and relevant contract context. It is asked to produce a structured proposal describing a potential change. Successful provider communication or JSON parsing is **not** proof of a valid proposal.
 
-This observation demonstrates the purpose of the deterministic validation boundary: successful provider communication and syntactically structured output do not by themselves establish that an LLM-generated contract change is acceptable.
+An independent validator checks the proposed operation, target field, change kind, and evidence grounding. Unsupported, invalid, ambiguous, or ungrounded suggestions are rejected.
 
-It is a single compatibility observation and is not presented as a general model-quality result.
+### Human review and candidate versioning
 
-## Current Measured Campaign Status
+Eligible validated proposals can be approved or rejected through a human review workflow. Candidate contract generation requires a validated proposal and an approved review decision referring to the same attempt. The generated OpenAPI YAML is validated before persistence; SHA-256 checksums protect exact document content, and schema isolation prevents unrelated reusable definitions from being unintentionally modified. Transactional checks, locking, and uniqueness constraints protect candidate version creation.
 
-At the mid-semester checkpoint:
+A candidate version is retained as a separate record. **The framework does not automatically replace or publish the baseline contract.**
 
-* `llm-001-undocumented-operation-r1` is permanently recorded as `TRANSPORT_FAILURE`.
-* `llm-001-undocumented-operation-r2` is permanently recorded as `TRANSPORT_FAILURE`.
-* both observations occurred before a retained HTTP response was available
-* retry count remained zero
-* their exact underlying transport causes cannot be reconstructed from the historical retained evidence
-* structured-output parsing is not applicable to these observations
-* deterministic proposal validation is not applicable
-* ground-truth correctness evaluation is not applicable
-* hallucination evaluation is not applicable
-* transport diagnostic observability has subsequently been enhanced for future attempts
-* `r3` and all later scheduled attempts remain unexecuted
+### React dashboard
 
-The two transport failures are **not evidence of LLM correctness failure or hallucination failure**. They are provider/infrastructure-layer observations only.
+The user interface provides six views:
 
-Current campaign progress:
+1. Overview
+2. Traffic Monitor
+3. Drift Analysis
+4. LLM Proposals
+5. Human Review
+6. Contract Versions
 
-```text
-Permanently recorded attempts: 2 / 40
-Unexecuted attempts:           38 / 40
-```
+These views expose distinct stages of the evidence-to-review workflow rather than conflating observed traffic with approved changes.
 
-## Measured Campaign Controller
+## Research evaluation and verified outcomes
 
-`scripts/e6-measured.ps1` provides explicit operator-controlled access to the frozen measured campaign.
+### Automated verification
 
-### Preflight
+| Check | Recorded final outcome |
+| --- | --- |
+| Backend regression tests | **388 passed**, no reported failures |
+| Frontend lint | Passed |
+| Frontend production build | Passed |
+| Candidate generator focused acceptance | 5/5 passed (historical focused run) |
 
-Performs safety and integrity checks for one explicitly selected scheduled attempt without executing the provider call.
+Test counts are records of completed verification, not a claim that every production condition or contract variant has been tested.
+
+### Controlled drift evaluation
+
+The historical controlled dataset comprised **18 scenarios**: 13 evaluated, four partially evaluated, and one not evaluated. For the evaluated subset, the recorded confusion counts were 10 true positives, three true negatives, zero false positives, and zero false negatives, giving precision, recall, and F1 of 1.0 **on that subset only**. Partial and unevaluated scenarios must not be silently counted as successful detections, and these figures do not establish general accuracy across arbitrary REST APIs.
+
+### Demonstrated workflow evidence
+
+Two distinct historical examples should not be combined into a single end-to-end transaction:
+
+- **Drift demonstration:** `traffic-00000027` captured a `GET /proxy/api/residents/2` response with the documented integer `id` observed as a string, resulting in a breaking response type mismatch.
+- **Approved candidate-version chain:** `traffic-00000020` was linked to a validated proposal, approved review, and persisted candidate contract version. This demonstrates a historical approval-gated versioning chain, but it is not the same event as the drift demonstration above.
+
+The historical candidate YAML export was not available for a separate retrospective checksum re-verification.
+
+### Gateway performance observations
+
+Historical local measurements compared direct Resident API requests with requests routed through the monitoring gateway:
+
+| Workload | Direct mean | Gateway mean | Difference |
+| --- | ---: | ---: | ---: |
+| 5 virtual users | 0.786 ms | 22.427 ms | +21.641 ms |
+| 10 virtual users | 1.633 ms | 34.750 ms | +33.117 ms |
+
+These figures describe the gateway forwarding, capture, synchronous PostgreSQL persistence, and logging path—not synchronous LLM inference. They come from historical summary evidence; the raw paired measurements were unavailable for full reconciliation, and some historical smoke artifacts did not meet HTTP 200 checks. They are **descriptive local observations**, not production performance or throughput guarantees.
+
+### Real-LLM reliability campaign
+
+The frozen protocol planned **10 scenarios × 4 repetitions = 40 attempts**, without automatic retries, using Groq and `openai/gpt-oss-20b`. The recorded campaign was **suspended after six attempts**, spanning two scenarios:
+
+| Outcome | Count |
+| --- | ---: |
+| Planned attempts | 40 |
+| Recorded attempts | 6 |
+| Unexecuted attempts | 34 |
+| Transport failures without a usable retained provider response | 2 |
+| HTTP 200 responses with successfully parsed structured output | 4 |
+| Parsed proposals rejected by deterministic grounding validation | 4 |
+| Accepted proposals within the measured campaign | 0 |
+
+The four parsed responses were rejected with `PROPOSED_VALUE_NOT_GROUNDED`; each matched 10 of 11 expected fields. Thus, **parse success was 4/4 among responses reaching parsing, while validation acceptance was 0/4**. The first two transport failures cannot be attributed to a specific cause from retained evidence and are not evidence of hallucination. The incomplete six-attempt campaign does **not** establish general model reliability or statistical performance. A separate historical successful validated proposal chain does not change these measured-campaign outcomes.
+
+The measured-campaign procedure and recorded deviations should be consulted before any future continuation. Do not characterize the 34 unexecuted attempts as completed or assume the frozen experiment can be resumed without research-governance review.
+
+## Experiment tooling
+
+The repository's historical operator-controlled LLM experiment entry point is `scripts/e6-measured.ps1`. It supports explicit `-Preflight`, `-Report`, and guarded `-Execute` operations with a scheduled attempt identifier; execution additionally requires controller authorization. It does not automatically retry or select the next attempt.
+
+**Do not execute measured provider calls merely to reproduce this README.** Protect Groq credentials and authorization tokens; never commit them to source control or experiment artifacts.
+
+## Local setup and verification
+
+The project uses separate backend/frontend components and a Resident API reference application. The precise checkout layout, environment-variable names, database credentials, ports, and startup commands must be confirmed from the repository's current configuration before being documented as reproducible instructions. This README intentionally does not invent those values.
+
+For a local verification of the backend, use the Maven wrapper from the applicable backend project directory (Windows PowerShell):
 
 ```powershell
-.\scripts\e6-measured.ps1 `
-    -Preflight `
-    -AttemptId "<explicit-scheduled-attempt-id>"
+.\mvnw.cmd test
 ```
 
-### Report
+Frontend verification should use the scripts defined in the frontend's actual `package.json` (lint and production build were recorded as passing). Start PostgreSQL and the Resident API using their checked-in configuration; Docker was specifically used for the Resident API database. Only run Groq integration or measured experiments with valid credentials and deliberate authorization.
 
-Reads and reports an already recorded attempt without provider execution.
+## Known limitations and future work
 
-```powershell
-.\scripts\e6-measured.ps1 `
-    -Report `
-    -AttemptId "<recorded-attempt-id>"
-```
+- **Scalability:** synchronous gateway persistence adds latency; asynchronous bounded processing, batching, retention, and partitioning require further design and evaluation.
+- **Privacy:** captured headers and payload values can contain sensitive data. Full schema-only evidence storage, systematic redaction, and retention controls were not established as complete production safeguards.
+- **Security:** enterprise-grade authentication, authorization, and auditing are future hardening work; do not infer them from prototype review controls.
+- **Coverage:** deterministic analysis implements supported OpenAPI rules, not the entire specification or every compatibility scenario.
+- **LLM reliability:** the 40-attempt experiment was incomplete, and the recorded structured proposals in that campaign failed evidence grounding.
+- **Deployment:** no production-scale deployment, automatic publication of approved contracts, or proven production-grade service resilience is claimed.
+- **Regression-test generation:** a potential extension, not a demonstrated final integrated capability.
 
-### Execute
+## Research context
 
-Execution is deliberately guarded and requires an explicit attempt identifier and controller authorization.
+The dissertation followed a Design Science Research approach and used a controlled Resident Management REST API to study runtime contract drift, LLM-assisted proposals, validation, and governance. The final dissertation report is the authoritative source for detailed methodology, findings, limitations, and references.
 
-```powershell
-.\scripts\e6-measured.ps1 `
-    -Execute `
-    -AttemptId "<explicit-scheduled-attempt-id>" `
-    -ControllerAuthorization "<session-supplied-authorization>"
-```
-
-Provider credentials and controller authorization must never be stored in repository files or committed to Git. Execution remains explicitly operator-controlled; the script does not automatically select the next attempt, overwrite an existing result, or retry a provider call.
-
-## Verification Baseline
-
-The accepted mid-semester backend regression baseline is:
-
-```text
-Tests run: 308
-Failures: 0
-Errors: 0
-Skipped: 0
-```
-
-The E6-F4D focused verification baseline is:
-
-```text
-Tests run: 64
-Failures: 0
-Errors: 0
-Skipped: 0
-```
-
-These baselines were accepted before the repository-freeze documentation step. The documentation-only checkpoint does not alter backend behaviour.
-
-## Mid-Semester Checkpoint Boundary
-
-Implementation is intentionally paused at this point for the mid-semester dissertation checkpoint.
-
-Completed work establishes:
-
-* runtime API evidence capture
-* durable evidence persistence
-* deterministic OpenAPI drift detection
-* controlled deterministic drift evaluation
-* interceptor/persistence performance evaluation
-* grounded LLM evidence construction
-* deterministic LLM proposal validation
-* frozen real-LLM reliability protocol
-* safe explicit measured-attempt execution infrastructure
-* enhanced transport diagnostics for future measured attempts
-
-The final dissertation implementation and evaluation are **not complete**.
-
-### Post-Mid-Sem Experimental Work
-
-Remaining experimental work includes:
-
-* execute the remaining 38 measured LLM attempts under the frozen protocol
-* calculate aggregate reliability metrics
-* analyze correctness, hallucination, and repetition agreement
-* document and appropriately treat any provider/environment reliability issues
-
-### Later System Work
-
-Later system work may include, as required by the final dissertation scope:
-
-* LLM-assisted OpenAPI proposal/application workflow
-* generated regression-test workflow
-* dashboard and human-review integration
-* final integrated evaluation
-* dissertation results and analysis
-* final viva preparation
-
-The repository at this checkpoint therefore represents a reproducible mid-semester research and implementation baseline, not the final completed ILDCVF system.
+**Academic status:** dissertation preparation accepted and closed in project tracking (November 2026); formal university acceptance is separate.

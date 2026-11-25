@@ -344,8 +344,7 @@ function OperationalScreen({ screen }) {
       const requests = [];
       if (needsTraffic) requests.push(["traffic", "/api/traffic/recent"]);
       if (needsDrift) requests.push(["drift", "/api/drift"]);
-      if (needsBaseline)
-        requests.push(["baseline", "/baseline/resident-api-v1.yaml"]);
+      if (needsBaseline) requests.push(["baseline", "/api/contract/baseline"]);
 
       try {
         const settled = await Promise.allSettled(

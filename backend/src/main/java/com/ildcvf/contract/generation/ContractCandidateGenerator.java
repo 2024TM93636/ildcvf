@@ -1,4 +1,3 @@
-
 package com.ildcvf.contract.generation;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,76 +51,19 @@ public class ContractCandidateGenerator {
 
             ObjectNode originalTree = root.deepCopy();
 
-            // Resolve operation dynamically.
-            String path = proposal.matchedOpenApiPath();
-            String method = proposal.method().toLowerCase();
+            switch (proposal.changeKind()) {
 
-            ObjectNode operation = (ObjectNode) root
-                    .path("paths")
-                    .path(path)
-                    .path(method);
+                case CHANGE_RESPONSE_FIELD_TYPE ->
+                        transformResponseField(root, proposal);
 
-            // Resolve the first successful JSON response.
-            ObjectNode content = findResponseContent(operation);
+                case ADD_RESPONSE_STATUS ->
+                        addResponseStatus(root, proposal);
 
-            JsonNode originalSchema = content.path("schema");
-
-            // Resolve the schema reference and create an isolated copy.
-            ObjectNode localSchema = resolveSchema(
-                    root,
-                    originalSchema
-            );
-
-            // Resolve target property dynamically.
-            String[] fieldPath = proposal.targetFieldPath().split("\\.");
-
-            ObjectNode current = localSchema;
-
-            for (int i = 0; i < fieldPath.length - 1; i++) {
-                current = (ObjectNode) current
-                        .path("properties")
-                        .path(fieldPath[i]);
+                default -> throw new CandidateGenerationException(
+                        "UNSUPPORTED_CHANGE",
+                        "Unsupported contract transformation"
+                );
             }
-
-            String targetField = fieldPath[fieldPath.length - 1];
-
-            ObjectNode target = (ObjectNode) current
-                    .path("properties")
-                    .path(targetField);
-
-            // Apply the proposed type.
-            String proposedType = proposal.proposedValue();
-
-            target.put("type", proposedType);
-
-            // Remove incompatible constraints.
-            if ("string".equals(proposedType)) {
-
-                remove(target,
-                        "format",
-                        "minimum",
-                        "maximum",
-                        "exclusiveMinimum",
-                        "exclusiveMaximum",
-                        "multipleOf");
-
-                JsonNode example = target.get("example");
-
-                if (example != null && example.isNumber()) {
-                    target.put("example", example.asText());
-                }
-
-            } else if ("integer".equals(proposedType)
-                    || "number".equals(proposedType)) {
-
-                remove(target,
-                        "minLength",
-                        "maxLength",
-                        "pattern");
-            }
-
-            // Replace only the selected operation's response schema.
-            content.set("schema", localSchema);
 
             String yaml = Yaml.pretty()
                     .writeValueAsString(root);
@@ -142,30 +84,36 @@ public class ContractCandidateGenerator {
                 );
             }
 
-            // Compare all unrelated document content.
+            // Verify that only the requested operation was modified.
             ObjectNode beforeOther = originalTree.deepCopy();
             ObjectNode afterOther = generatedTree.deepCopy();
 
-            ObjectNode beforeContent = (ObjectNode) beforeOther
+            ObjectNode beforeOperation = (ObjectNode) beforeOther
                     .path("paths")
-                    .path(path)
-                    .path(method)
-                    .path("responses")
-                    .path(findResponseStatus(operation))
-                    .path("content")
-                    .path("application/json");
+                    .path(proposal.matchedOpenApiPath())
+                    .path(proposal.method().toLowerCase());
 
-            ObjectNode afterContent = (ObjectNode) afterOther
+            ObjectNode afterOperation = (ObjectNode) afterOther
                     .path("paths")
-                    .path(path)
-                    .path(method)
-                    .path("responses")
-                    .path(findResponseStatus(operation))
-                    .path("content")
-                    .path("application/json");
+                    .path(proposal.matchedOpenApiPath())
+                    .path(proposal.method().toLowerCase());
 
-            beforeContent.set("schema", originalSchema.deepCopy());
-            afterContent.set("schema", originalSchema.deepCopy());
+            beforeOther.set(
+                    "paths",
+                    beforeOther.path("paths").deepCopy()
+            );
+
+            afterOther.set(
+                    "paths",
+                    afterOther.path("paths").deepCopy()
+            );
+
+            // Exclude only the intended operation from unrelated-content comparison.
+            ((ObjectNode) beforeOther.path("paths"))
+                    .remove(proposal.matchedOpenApiPath());
+
+            ((ObjectNode) afterOther.path("paths"))
+                    .remove(proposal.matchedOpenApiPath());
 
             if (!beforeOther.equals(afterOther)) {
                 throw new CandidateGenerationException(
@@ -328,6 +276,107 @@ public class ContractCandidateGenerator {
                 MessageDigest.getInstance("SHA-256")
                         .digest(bytes)
         );
+    }
+
+    /**
+     * Adds a new response status to the specified OpenAPI operation.
+     */
+    private static void addResponseStatus(
+            ObjectNode root,
+            ContractChangeProposal proposal) {
+
+        ObjectNode operation = (ObjectNode) root
+                .path("paths")
+                .path(proposal.matchedOpenApiPath())
+                .path(proposal.method().toLowerCase());
+
+        ObjectNode responses = (ObjectNode) operation.path("responses");
+
+        String status = proposal.proposedValue();
+
+        ObjectNode response = root.objectNode();
+
+        response.put(
+                "description",
+                "Request validation failed or request body was malformed"
+        );
+
+        ObjectNode content = root.objectNode();
+        ObjectNode jsonContent = root.objectNode();
+        ObjectNode schema = root.objectNode();
+
+        schema.put(
+                "$ref",
+                "#/components/schemas/ApiError"
+        );
+
+        jsonContent.set("schema", schema);
+        content.set("application/json", jsonContent);
+
+        response.set("content", content);
+
+        if (responses.has(status)) {
+            throw new CandidateGenerationException(
+                    "RESPONSE_ALREADY_EXISTS",
+                    "Response status " + status + " already exists"
+            );
+        }
+
+        responses.set(status, response);
+    }
+
+    private static void transformResponseField(
+            ObjectNode root,
+            ContractChangeProposal proposal) {
+
+        String path = proposal.matchedOpenApiPath();
+        String method = proposal.method().toLowerCase();
+
+        ObjectNode operation = (ObjectNode) root
+                .path("paths")
+                .path(path)
+                .path(method);
+
+        ObjectNode content = findResponseContent(operation);
+
+        JsonNode originalSchema = content.path("schema");
+
+        ObjectNode localSchema = resolveSchema(
+                root,
+                originalSchema
+        );
+
+        String[] fieldPath = proposal.targetFieldPath().split("\\.");
+
+        ObjectNode current = localSchema;
+
+        for (int i = 0; i < fieldPath.length - 1; i++) {
+            current = (ObjectNode) current
+                    .path("properties")
+                    .path(fieldPath[i]);
+        }
+
+        String targetField = fieldPath[fieldPath.length - 1];
+
+        ObjectNode target = (ObjectNode) current
+                .path("properties")
+                .path(targetField);
+
+        target.put("type", proposal.proposedValue());
+
+        if ("string".equals(proposal.proposedValue())) {
+            remove(
+                    target,
+                    "format",
+                    "minimum",
+                    "maximum",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "multipleOf"
+            );
+        }
+
+        content.set("schema", localSchema);
     }
 }
 

@@ -15,9 +15,12 @@ Rules:
 7. When evidence does not support a nullable output field, use null rather than inventing a value.
 8. Select one allowed contract-change kind that directly addresses the supplied drift evidence.
 9. The proposed value must describe only the grounded contract change supported by the evidence. Do not add richer contract content that cannot be derived from the evidence.
-10. Keep the rationale short, factual, and grounded in the supplied evidence.
-11. Return only one JSON object conforming exactly to the supplied JSON Schema.
-12. Do not include markdown, commentary, code fences, alternative proposals, or additional properties.
+10. For ADD_OPERATION, proposedValue must be exactly "<method> <runtimePath>".
+11. For RELAX_REQUEST_REQUIRED_FIELD, proposedValue MUST be exactly "optional". Do not use "false", "true", or other Boolean representations. The targetFieldPath identifies the property whose required constraint should be relaxed.
+12. For ADD_RESPONSE_STATUS, proposedValue MUST be the exact observed HTTP response status.
+13. Keep the rationale short, factual, and grounded in the supplied evidence.
+14. Return only one JSON object conforming exactly to the supplied JSON Schema.
+15. Do not include markdown, commentary, code fences, alternative proposals, or additional properties.
 
 The deterministic validator will independently verify source identity, drift type, endpoint, field, expected/observed values, change kind, and proposed value.
 

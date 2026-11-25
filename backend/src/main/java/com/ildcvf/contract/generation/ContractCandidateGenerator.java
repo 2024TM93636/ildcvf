@@ -59,6 +59,9 @@ public class ContractCandidateGenerator {
                 case ADD_RESPONSE_STATUS ->
                         addResponseStatus(root, proposal);
 
+                case RELAX_REQUEST_REQUIRED_FIELD ->
+                        relaxRequestRequiredField(root, proposal);
+
                 default -> throw new CandidateGenerationException(
                         "UNSUPPORTED_CHANGE",
                         "Unsupported contract transformation"
@@ -377,6 +380,78 @@ public class ContractCandidateGenerator {
         }
 
         content.set("schema", localSchema);
+    }
+
+    private static void relaxRequestRequiredField(
+            ObjectNode root,
+            ContractChangeProposal proposal) {
+
+        String path = proposal.matchedOpenApiPath();
+        String method = proposal.method().toLowerCase();
+
+        ObjectNode operation = (ObjectNode) root
+                .path("paths")
+                .path(path)
+                .path(method);
+
+        ObjectNode requestBody = (ObjectNode) operation
+                .path("requestBody");
+
+        ObjectNode content = (ObjectNode) requestBody
+                .path("content")
+                .path("application/json");
+
+        JsonNode schemaNode = content.path("schema");
+
+        ObjectNode schema = resolveSchema(root, schemaNode);
+
+        if (!"optional".equals(proposal.proposedValue())) {
+            throw new CandidateGenerationException(
+                    "INVALID_PROPOSED_VALUE",
+                    "Required field relaxation must use 'optional'"
+            );
+        }
+
+        String fieldPath = proposal.targetFieldPath();
+
+        if (fieldPath == null || !fieldPath.startsWith("/")) {
+            throw new CandidateGenerationException(
+                    "INVALID_TARGET_FIELD",
+                    "Invalid request field path"
+            );
+        }
+
+        String fieldName = fieldPath.substring(1)
+                .replace("~1", "/")
+                .replace("~0", "~");
+
+        JsonNode requiredNode = schema.path("required");
+
+        if (!(requiredNode instanceof com.fasterxml.jackson.databind.node.ArrayNode required)) {
+            throw new CandidateGenerationException(
+                    "INVALID_REQUEST_SCHEMA",
+                    "Request schema does not contain a required array"
+            );
+        }
+
+        boolean removed = false;
+
+        for (int i = 0; i < required.size(); i++) {
+            if (required.get(i).asText().equals(fieldName)) {
+                required.remove(i);
+                removed = true;
+                break;
+            }
+        }
+
+        if (!removed) {
+            throw new CandidateGenerationException(
+                    "TARGET_FIELD_NOT_REQUIRED",
+                    "Target field is not currently required"
+            );
+        }
+
+        content.set("schema", schema);
     }
 }
 
